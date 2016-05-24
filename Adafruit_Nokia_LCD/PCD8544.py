@@ -47,7 +47,7 @@ PCD8544_SETVOP = 0x80
 class PCD8544(object):
 	"""Nokia 5110/3310 PCD8544-based LCD display."""
 
-	def __init__(self, dc, rst, sclk=None, din=None, cs=None, gpio=None, spi=None):
+	def __init__(self, dc, rst, sclk=None, din=None, cs=None, gpio=None, spi=None, backlight=None):
 		self._sclk = sclk
 		self._din = din
 		self._dc = dc
@@ -55,11 +55,16 @@ class PCD8544(object):
 		self._rst = rst
 		self._gpio = gpio
 		self._spi = spi
+		self._backlight = backlight
 		# Default to detecting platform GPIO.
 		if self._gpio is None:
 			self._gpio = GPIO.get_platform_gpio()
 		if self._rst is not None:
 			self._gpio.setup(self._rst, GPIO.OUT)
+		if self._backlight is not None:
+			self._gpio.setup(self._backlight, GPIO.OUT)
+			#Default turn on backlight
+			self._gpio.set_high(self._backlight)
 		# Default to bit bang SPI.
 		if self._spi is None:
 			self._spi = SPI.BitBang(self._gpio, self._sclk, self._din, None, self._cs)
@@ -134,6 +139,13 @@ class PCD8544(object):
 			self._gpio.set_low(self._rst)
 			time.sleep(0.1)
 			self._gpio.set_high(self._rst)
+
+	def backlight(self, state):
+		if self._backlight is not None:
+			if state:
+				self._gpio.set_high(self._backlight)
+			else:
+				self._gpio.set_low(self._backlight)
 
 	def display(self):
 		"""Write display buffer to physical display."""
